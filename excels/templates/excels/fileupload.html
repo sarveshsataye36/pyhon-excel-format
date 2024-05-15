@@ -1,0 +1,63 @@
+{% extends 'excels/index.html' %}
+
+{% block title %}Excels{% endblock %}
+
+{% block content %}
+<h1>Upload Excel File</h1>
+    <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'excels:create_excel' %}">
+        {% csrf_token %}
+        <input type="file" name="excel_file" id="excelFileInput" accept=".xlsx, .xls">
+        <div id="columnCheckboxes"></div>
+        <button type="submit"id="formDownlaod" style="display: none;"> download </button>
+    </form>
+
+
+    <!-- <form action="" method="post" id="formDownlaod" style="display: none;">
+        {% csrf_token %}
+        <div id="columnCheckboxes"></div>
+        <button type="submit"> download </button>
+    </form> -->
+    <script>
+        document.getElementById('excelFileInput').addEventListener('change', function() {
+            var formData = new FormData();
+            var fileInput = document.getElementById('excelFileInput').files[0];
+            formData.append('excel_file', fileInput);
+            
+            // Send the file data to the server-side view using AJAX
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', "{% url 'excels:upload_excel' %}", true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+            xhr.onload = function() {
+
+                if (xhr.status == 200) {
+                    var columnNames = JSON.parse(xhr.responseText).column_names;
+                    var columnCheckboxesDiv = document.getElementById('columnCheckboxes');
+                    columnCheckboxesDiv.innerHTML = ''; // Clear previous checkboxes
+
+                    // Create checkboxes for each column name
+                    columnNames.forEach(function(columnName) {
+                        var checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'selected_columns';
+                        checkbox.value = columnName;
+                        checkbox.id = 'checkbox_' + columnName;
+
+                        var label = document.createElement('label');
+                        label.htmlFor = 'checkbox_' + columnName;
+                        label.appendChild(document.createTextNode(columnName));
+
+                        columnCheckboxesDiv.appendChild(checkbox);
+                        columnCheckboxesDiv.appendChild(label);
+                        columnCheckboxesDiv.appendChild(document.createElement('br'));
+                    });
+
+                    document.getElementById('formDownlaod').style.display="flex";
+                    console.log('file upload sucess');
+                } else {
+                    console.log('file upload fail');
+                }
+            };
+            xhr.send(formData);
+        });
+    </script>
+{% endblock %}
