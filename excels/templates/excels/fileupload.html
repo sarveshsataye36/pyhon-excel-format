@@ -3,25 +3,41 @@
 {% block title %}Excels{% endblock %}
 
 {% block content %}
-<h1>Upload Excel File</h1>
-    <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'excels:create_excel' %}">
-        {% csrf_token %}
-        <input type="file" name="excel_file" id="excelFileInput" accept=".xlsx, .xls">
-        <div id="columnCheckboxes"></div>
-        <button type="submit"id="formDownlaod" style="display: none;"> download </button>
-    </form>
+    <div>
+        <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'excels:create_excel' %}">
+            {% csrf_token %}
+
+            <div class="row mb-3">
+                <div class="mb-3 col-lg-6">
+                    <label for="header_row_num" class="form-label">Header Number</label>
+                    <input type="number" class="form-control" id="header_row_num" name="header_row_num" placeholder="0" value="0" />
+                  </div>
+
+                <div class="mb-3 col-lg-6">
+                    <label for="excelFileInput" class="form-label">Upload Excel</label>
+                    <input type="file" class="form-control" name="excel_file" id="excelFileInput" accept=".xlsx, .xls">
+                  </div>
+                  
+            </div>
+              <div id="columnCheckboxes"></div>
+
+              <div class="mt-4 d-flex justify-content-center align-items-center">
+                <button type="reset"id="resetForm" class="btn btn-small btn-danger mr-3" onclick="document.getElementById('columnCheckboxes').innerHTML= '';document.getElementById('formDownlaod').style.display= 'none';"> Reset </button>
+                <button type="submit"id="formDownlaod" class="btn btn-small btn-primary" style="display: none;"> Download Excel </button>
+              </div>
+            
+        </form>
+    </div>
 
 
-    <!-- <form action="" method="post" id="formDownlaod" style="display: none;">
-        {% csrf_token %}
-        <div id="columnCheckboxes"></div>
-        <button type="submit"> download </button>
-    </form> -->
+
     <script>
         document.getElementById('excelFileInput').addEventListener('change', function() {
             var formData = new FormData();
             var fileInput = document.getElementById('excelFileInput').files[0];
+            var header_row_num = document.getElementById('header_row_num').value;
             formData.append('excel_file', fileInput);
+            formData.append('header_row_num', header_row_num);
             
             // Send the file data to the server-side view using AJAX
             var xhr = new XMLHttpRequest();
@@ -33,22 +49,46 @@
                     var columnNames = JSON.parse(xhr.responseText).column_names;
                     var columnCheckboxesDiv = document.getElementById('columnCheckboxes');
                     columnCheckboxesDiv.innerHTML = ''; // Clear previous checkboxes
+                    
+                    //
+                    var headdingdiv = document.createElement('h6');
+                    headdingdiv.innerHTML = 'Select Column';
+
+                    var divRowWrapper = document.createElement('div');
+                    divRowWrapper.className = 'row';
+
+                    columnCheckboxesDiv.appendChild(headdingdiv);
+                    columnCheckboxesDiv.appendChild(divRowWrapper);
 
                     // Create checkboxes for each column name
                     columnNames.forEach(function(columnName) {
+
+                        // Create a div to wrap the checkbox and label
+                        var wrapperDiv = document.createElement('div');
+                        wrapperDiv.className = 'form-control col-lg-4 ps-5';
+
+
+                        // create checkbox dynamic
                         var checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.name = 'selected_columns';
                         checkbox.value = columnName;
+                        checkbox.className =" form-check-input";
                         checkbox.id = 'checkbox_' + columnName;
 
+                        // create label dynamic
                         var label = document.createElement('label');
                         label.htmlFor = 'checkbox_' + columnName;
                         label.appendChild(document.createTextNode(columnName));
 
-                        columnCheckboxesDiv.appendChild(checkbox);
-                        columnCheckboxesDiv.appendChild(label);
-                        columnCheckboxesDiv.appendChild(document.createElement('br'));
+                        // Append the checkbox and label to the wrapper div
+                        wrapperDiv.appendChild(checkbox);
+                        wrapperDiv.appendChild(label);
+
+                        divRowWrapper.appendChild(wrapperDiv);
+                        // columnCheckboxesDiv.appendChild(label);
+                        // columnCheckboxesDiv.appendChild(document.createElement('br'));
+
                     });
 
                     document.getElementById('formDownlaod').style.display="flex";
@@ -58,6 +98,12 @@
                 }
             };
             xhr.send(formData);
+        });
+
+
+        // refresh form every time
+        window.addEventListener('load', function() {
+            document.getElementById('uploadForm').reset();
         });
     </script>
 {% endblock %}
