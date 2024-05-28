@@ -3,7 +3,7 @@
 {% block title %}Excels{% endblock %}
 
 {% block content %}
-    <div>
+    <div class="container">
         <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'excels:create_excel' %}">
             {% csrf_token %}
 

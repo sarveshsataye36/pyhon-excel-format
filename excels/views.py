@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse
 import openpyxl
 import re
 import pandas as pd
+from .models import Insurance,OfficeCode
 
 def index(request):
     return render(request, 'excels/fileupload.html')
@@ -87,3 +88,54 @@ def create_excel(request):
 
     # If request method is GET or no file was uploaded, render the upload form
     return redirect('index')
+
+
+
+
+
+def setting(request):
+    return render(request, 'excels/setting.html')
+
+def store_excel_data(request):
+    if request.method == 'POST' and request.FILES['upload_excel_file']:
+        excel_file = request.FILES['upload_excel_file']
+        model_name = request.POST['model_name']
+
+        uploaded_excel_to_db(excel_file,model_name)
+
+        df = pd.read_excel(excel_file)
+    
+        return JsonResponse({'msg': 'Data upload sucess'}, status=200)
+    else:
+        return JsonResponse({'msg': 'No file was uploaded.'}, status=400)
+
+
+def uploaded_excel_to_db(f, model_name):
+    
+    df = pd.read_excel(f)
+
+    if model_name == 'insurance':
+
+        # Truncate the table
+        Insurance.objects.all().delete()
+        # Insert new records
+        for _, row in df.iterrows():
+            Insurance.objects.create(
+                insurance_id=row['Insurance_code'],
+                insurance_name=row['Insurance_name']
+            )
+
+    elif  model_name == 'office_code':
+
+        # Truncate the table
+        OfficeCode.objects.all().delete()
+        # Insert new records
+        for _, row in df.iterrows():
+            OfficeCode.objects.create(
+                office_code_id=row['Office_code'],
+                office_code_name=row['Office_branch']
+            )
+
+
+
+

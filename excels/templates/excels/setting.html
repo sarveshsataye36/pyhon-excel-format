@@ -1,0 +1,79 @@
+{% extends 'excels/index.html' %}
+
+{% block title %}Excels{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Settings</h1>
+    <div class="mt-4">
+        <div class="mb-3">
+            <label for="excelFileUpload" class="form-label">Upload Debitor File </label>
+            <input class="form-control form-control-sm" id="excelFileUpload" type="file" onchange="fileInsuranceUpload();">
+        </div>
+        <span id="msg"></span>
+    </div>
+
+    <hr>
+
+    <div class="mt-4">
+        <div class="mb-3">
+            <label for="excelFileUpload" class="form-label">Upload Office Code File </label>
+            <input class="form-control form-control-sm" id="excelFileOfficeUpload" type="file" onchange="fileOfficeCodeUpload();">
+        </div>
+        <span id="Officemsg"></span>
+    </div>
+</div>
+
+<script>
+
+    function fileInsuranceUpload(){
+        var formData = new FormData();
+        var fileInput = document.getElementById('excelFileUpload').files[0];
+        formData.append('upload_excel_file', fileInput);
+        formData.append('model_name', 'insurance');
+        
+        // Send the file data to the server-side view using AJAX
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', "{% url 'excels:store_excel_data' %}", true);
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.onload = function() {
+
+            if (xhr.status == 200) {
+                var msg = JSON.parse(xhr.responseText).msg;
+                document.getElementById('msg').style.color = "green";
+                document.getElementById('msg').innerHTML = msg;
+            } else {
+                document.getElementById('msg').style.color = "red";
+                document.getElementById('msg').innerHTML = "Fail to file upload";
+            }
+        };
+        xhr.send(formData);
+    }
+
+
+    function fileOfficeCodeUpload(){
+        var formData = new FormData();
+        var fileInput = document.getElementById('excelFileOfficeUpload').files[0];
+        formData.append('upload_excel_file', fileInput);
+        formData.append('model_name', 'office_code');
+        
+        // Send the file data to the server-side view using AJAX
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', "{% url 'excels:store_excel_data' %}", true);
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.onload = function() {
+
+            if (xhr.status == 200) {
+                var msg = JSON.parse(xhr.responseText).msg;
+                document.getElementById('Officemsg').style.color = "green";
+                document.getElementById('Officemsg').innerHTML = msg;
+            } else {
+                document.getElementById('Officemsg').style.color = "red";
+                document.getElementById('Officemsg').innerHTML = "Fail to file upload";
+            }
+        };
+        xhr.send(formData);
+    }
+
+</script>
+{% endblock %}
