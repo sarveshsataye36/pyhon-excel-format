@@ -47,6 +47,8 @@
 
                 if (xhr.status == 200) {
                     var columnNames = JSON.parse(xhr.responseText).column_names;
+                    var headerColumn = JSON.parse(xhr.responseText).header_column;
+
                     var columnCheckboxesDiv = document.getElementById('columnCheckboxes');
                     columnCheckboxesDiv.innerHTML = ''; // Clear previous checkboxes
                     
@@ -60,12 +62,14 @@
                     columnCheckboxesDiv.appendChild(headdingdiv);
                     columnCheckboxesDiv.appendChild(divRowWrapper);
 
+                    let count = 0;
+
                     // Create checkboxes for each column name
                     columnNames.forEach(function(columnName) {
 
-                        // Create a div to wrap the checkbox and label
+                        // Create a div to wr   ap the checkbox and label
                         var wrapperDiv = document.createElement('div');
-                        wrapperDiv.className = 'form-control col-lg-4 ps-5';
+                        wrapperDiv.className = 'form-control col-lg-6 ps-5';
 
 
                         // create checkbox dynamic
@@ -74,20 +78,44 @@
                         checkbox.name = 'selected_columns';
                         checkbox.value = columnName;
                         checkbox.className =" form-check-input";
-                        checkbox.id = 'checkbox_' + columnName;
+                        checkbox.id = 'checkbox_' + count;
+                        checkbox.setAttribute('dataIndex', count);
+                        checkbox.onclick = function() { 
+                            var dataIndex = this.getAttribute('dataIndex');
+                            toggleSelect(dataIndex); 
+                        };
 
                         // create label dynamic
                         var label = document.createElement('label');
-                        label.htmlFor = 'checkbox_' + columnName;
+                        label.htmlFor = 'checkbox_' + count;
                         label.appendChild(document.createTextNode(columnName));
+
+
+                        // Create the select box
+                        var selectBox = document.createElement('select');
+                        selectBox.id = 'headerSelectBox_'+count;
+                        selectBox.className = 'ml-5 form-select';
+                        selectBox.name = 'mapped_column';
+                        selectBox.disabled = true;
+
+                        // Add options to the select box
+                        headerColumn.forEach(function(header) {
+                            var option = document.createElement('option');
+                            option.value = header;
+                            option.text = header;
+                            selectBox.appendChild(option);
+                        });
 
                         // Append the checkbox and label to the wrapper div
                         wrapperDiv.appendChild(checkbox);
                         wrapperDiv.appendChild(label);
+                        wrapperDiv.appendChild(selectBox);
 
                         divRowWrapper.appendChild(wrapperDiv);
                         // columnCheckboxesDiv.appendChild(label);
                         // columnCheckboxesDiv.appendChild(document.createElement('br'));
+
+                        count++;
 
                     });
 
@@ -105,5 +133,12 @@
         window.addEventListener('load', function() {
             document.getElementById('uploadForm').reset();
         });
+
+
+        // toggler
+        function toggleSelect(counter){
+            var selectBox = document.getElementById('headerSelectBox_' + counter);
+            selectBox.disabled = !selectBox.disabled;
+        }
     </script>
 {% endblock %}
