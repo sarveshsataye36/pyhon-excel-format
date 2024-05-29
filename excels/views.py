@@ -1,6 +1,6 @@
 import io
 import os
-from django.shortcuts import render
+from django.shortcuts import render,get_object_or_404
 from django.conf import settings
 import shutil
 from django.http import JsonResponse, HttpResponse
@@ -8,6 +8,7 @@ import openpyxl
 import re
 import pandas as pd
 from .models import Insurance,OfficeCode
+from datetime import date
 
 def index(request):
     return render(request, 'excels/fileupload.html')
@@ -15,8 +16,8 @@ def index(request):
 
 def upload_excel(request):
     if request.method == 'POST' and request.FILES['excel_file']:
-        excel_file = request.FILES['excel_file']
 
+        excel_file = request.FILES['excel_file']
 
         header_row_num = int(request.POST.get('header_row_num', 0))  # Get the starting row from the request, default is 0
         if(header_row_num > 0):
@@ -37,16 +38,21 @@ def upload_excel(request):
         # Get column headers
         header_column_names = header_excel.columns.tolist()
 
-        return JsonResponse({'column_names': column_names, 'header_column': header_column_names})
+        # Get Insurance column Name in dic format
+        insurance_data = list(Insurance.objects.values('insurance_id', 'insurance_name'))
+
+        return JsonResponse({'column_names': column_names, 'header_column': header_column_names, 'insurance_data':insurance_data})
     else:
         return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
 
 def create_excel(request):
     if request.method == 'POST' and request.FILES['excel_file']:
+        current_date = date.today().strftime('%d/%m/%Y')
         excel_file = request.FILES['excel_file']
         column_names = request.POST.getlist('selected_columns')
         header_row_num = int(request.POST.get('header_row_num', 0))
+        insurance_id = request.POST.get('insurance_id')
         header_list = request.POST.getlist('mapped_column')
 
         # Get the starting row from the request, default is 0
@@ -56,9 +62,16 @@ def create_excel(request):
         df = pd.read_excel(excel_file, skiprows=header_row_num)
         filtered_df = df[column_names]
 
+        # Remove specific characters from the filtered DataFrame
+        filtered_df = filtered_df.applymap(lambda x: str(x).replace('`', '').replace(':', ''))
+
         # Load the formatted file from storage
         formatted_file_path = os.path.join(settings.BASE_DIR, 'data', 'header.xlsx')
         formatted_df = pd.read_excel(formatted_file_path)
+
+        # get single data from insurance table
+        insurance = get_object_or_404(Insurance, insurance_id=insurance_id)
+        insurance_name = insurance.insurance_name
 
         # Create a new DataFrame with the same columns as the formatted file
         merged_df = formatted_df.copy()
@@ -68,8 +81,9 @@ def create_excel(request):
             merged_df[header_name] = filtered_df[col_name]
 
         #------------------------code for setting default value start
-        # merged_df['Debtor Name'] = 'sarvesh'
-        # merged_df['Debtor Branch Ref'] = 'MUM'
+        merged_df['Debtor Name'] = insurance_name
+        merged_df['Debtor Branch Ref'] = insurance_id
+        merged_df['RepDate'] = current_date
         #------------------------code for setting default value end
 
         # Create a new Excel file

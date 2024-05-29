@@ -16,13 +16,16 @@
                 <div class="mb-3 col-lg-6">
                     <label for="excelFileInput" class="form-label">Upload Excel</label>
                     <input type="file" class="form-control" name="excel_file" id="excelFileInput" accept=".xlsx, .xls">
-                  </div>
+                </div>
+
+                <div class="mb-3 col-lg-12" id="mergedForm">
+                </div>
                   
             </div>
               <div id="columnCheckboxes"></div>
 
               <div class="mt-4 d-flex justify-content-center align-items-center">
-                <button type="reset"id="resetForm" class="btn btn-small btn-danger mr-3" onclick="document.getElementById('columnCheckboxes').innerHTML= '';document.getElementById('formDownlaod').style.display= 'none';"> Reset </button>
+                <button type="reset"id="resetForm" class="btn btn-small btn-danger mr-3" onclick="resetFunc();"> Reset </button>
                 <button type="submit"id="formDownlaod" class="btn btn-small btn-primary" style="display: none;"> Download Excel </button>
               </div>
             
@@ -48,6 +51,32 @@
                 if (xhr.status == 200) {
                     var columnNames = JSON.parse(xhr.responseText).column_names;
                     var headerColumn = JSON.parse(xhr.responseText).header_column;
+                    var insuranceData = JSON.parse(xhr.responseText).insurance_data;
+
+                     // Create the select box
+                    const selectBoxInsurance = document.createElement('select');
+                    selectBoxInsurance.id = 'insurance_id';
+                    selectBoxInsurance.className = 'form-control';
+                    selectBoxInsurance.name = 'insurance_id';
+
+                    insuranceData.forEach(function(insuranceData) {
+                            var option = document.createElement('option');
+                            option.value = insuranceData['insurance_id'];
+                            option.text = insuranceData['insurance_name'];
+                            selectBoxInsurance.appendChild(option);
+                    });
+
+                    // create label dynamic
+                    var labelSelect = document.createElement('label');
+                        labelSelect.htmlFor = 'insurance_name';
+                        labelSelect.id="insurance_data_name";
+                        labelSelect.appendChild(document.createTextNode(selectBoxInsurance));
+
+                    document.getElementById('mergedForm').append(selectBoxInsurance);   
+                    // document.getElementById('insurance_data_name').innerHTML="Select Insurance Name";
+                    
+
+                    // console.log(insuranceData);
 
                     var columnCheckboxesDiv = document.getElementById('columnCheckboxes');
                     columnCheckboxesDiv.innerHTML = ''; // Clear previous checkboxes
@@ -139,6 +168,13 @@
         function toggleSelect(counter){
             var selectBox = document.getElementById('headerSelectBox_' + counter);
             selectBox.disabled = !selectBox.disabled;
+        }
+
+
+        function resetFunc(){
+            document.getElementById('columnCheckboxes').innerHTML= '';
+            document.getElementById('mergedForm').innerHTML= '';
+            document.getElementById('formDownlaod').style.display= 'none';
         }
     </script>
 {% endblock %}
