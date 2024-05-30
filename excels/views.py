@@ -1,6 +1,6 @@
 import io
 import os
-from django.shortcuts import render,get_object_or_404
+from django.shortcuts import render,get_object_or_404,redirect
 from django.conf import settings
 import shutil
 from django.http import JsonResponse, HttpResponse
@@ -8,6 +8,8 @@ import openpyxl
 import re
 import pandas as pd
 from .models import Insurance,OfficeCode
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
 from datetime import date
 
 def index(request):
@@ -45,7 +47,6 @@ def upload_excel(request):
     else:
         return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
-
 def create_excel(request):
     if request.method == 'POST' and request.FILES['excel_file']:
         current_date = date.today().strftime('%d/%m/%Y')
@@ -69,7 +70,7 @@ def create_excel(request):
         formatted_file_path = os.path.join(settings.BASE_DIR, 'data', 'header.xlsx')
         formatted_df = pd.read_excel(formatted_file_path)
 
-        # get single data from insurance table
+        # Get single data from insurance table
         insurance = get_object_or_404(Insurance, insurance_id=insurance_id)
         insurance_name = insurance.insurance_name
 
@@ -80,16 +81,41 @@ def create_excel(request):
         for col_name, header_name in zip(column_names, header_list):
             merged_df[header_name] = filtered_df[col_name]
 
-        #------------------------code for setting default value start
+        # Set default values
         merged_df['Debtor Name'] = insurance_name
         merged_df['Debtor Branch Ref'] = insurance_id
         merged_df['RepDate'] = current_date
-        #------------------------code for setting default value end
 
-        # Create a new Excel file
+        # Create a new Excel file with pandas
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             merged_df.to_excel(writer, index=False)
+
+        # Save the Excel file to a temporary location
+        temp_excel_file = 'temp_merged_data.xlsx'
+        with pd.ExcelWriter(temp_excel_file, engine='openpyxl') as writer:
+            merged_df.to_excel(writer, index=False)
+
+        # Load the temporary file with openpyxl
+        wb = load_workbook(temp_excel_file)
+        ws = wb.active
+
+        # Adjust column widths to fit the content
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter  # Get the column name (A, B, C, etc.)
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = max_length + 2  # Add some extra space
+            ws.column_dimensions[column].width = adjusted_width
+
+        # Save the modified workbook to BytesIO
+        output = io.BytesIO()
+        wb.save(output)
 
         # Create HTTP response with the new Excel file
         response = HttpResponse(
@@ -98,13 +124,13 @@ def create_excel(request):
         )
         response['Content-Disposition'] = 'attachment; filename=merged_data.xlsx'
 
+        # Remove the temporary file
+        os.remove('temp_merged_data.xlsx')
+
         return response
 
     # If request method is GET or no file was uploaded, render the upload form
     return redirect('index')
-
-
-
 
 
 def setting(request):
