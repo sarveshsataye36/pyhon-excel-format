@@ -20,8 +20,58 @@
 
                 <div class="mb-3 col-lg-12" id="mergedForm">
                 </div>
-                  
-            </div>
+                </div>
+
+                <div id="narationDiv" style="display: none;">
+                    <input type="hidden" id="insured_name">
+                    <div class="row">
+                        <div class="col-lg-6 mb-3">
+                            <label for="narationDate" class="form-label">Naration Date</label>
+                            <input type="text" class="form-control" name="narationDate" id="narationDate" onblur="fullNaration()">
+                          </div>
+                          <div class="col-lg-6 mb-3">
+                            <label for="narationAmount" class="form-label">Naration Amount</label>
+                            <input type="text" class="form-control" id="narationAmount" name="narationAmount" onblur="fullNaration()">
+                          </div>
+                          <p id="fullNaration" style="color: blue;"></p>
+                        </div>
+
+                    <div class="row">
+                        <div class="input-group mb-3 col-lg-3">
+                            <div class="input-group-text" style="padding: .375rem 1rem !important;">
+                              <input class="form-check-input mt-0" style="margin-left: -7px !important;" type="checkbox" id="cgst_checkbox" name="cgst_checkbox" value="cgst_check" onclick="fullNaration();">
+                            </div>
+                            <input type="text" class="form-control" id="cgst_input" name="cgst_input"  aria-label="Text input with checkbox" placeholder="CGST">
+                        </div>
+                        <div class="input-group mb-3 col-lg-3">
+                            <div class="input-group-text" style="padding: .375rem 1rem !important;">
+                              <input class="form-check-input mt-0" style="margin-left: -7px !important;" type="checkbox" id="sgst_checkbox" name="sgst_checkbox" value="sgst_check" onclick="fullNaration();">
+                            </div>
+                            <input type="text" class="form-control" id="sgst_input" name="sgst_input" aria-label="Text input with checkbox" placeholder="SGST">
+                        </div>
+                        <div class="input-group mb-3 col-lg-3">
+                            <div class="input-group-text" style="padding: .375rem 1rem !important;">
+                              <input class="form-check-input mt-0" style="margin-left: -7px !important;" type="checkbox" value="tds_check" id="tds_checkbox" name="tds_checkbox" aria-label="Checkbox for following text input">
+                            </div>
+                            <input type="text" class="form-control" id="tds_input" name="tds_input" aria-label="Text input with checkbox" placeholder="TDS">
+                        </div>
+                        <div class="input-group mb-3 col-lg-3">
+                            <div class="input-group-text" style="padding: .375rem 1rem !important;">
+                              <input class="form-check-input mt-0" style="margin-left: -7px !important;" type="checkbox" id="gst_tds_checkbox" name="gst_tds_checkbox" value="gst_tds_check" aria-label="Checkbox for following text input">
+                            </div>
+                            <input type="text" class="form-control" id="gst_tds_input" name="gst_tds_input" aria-label="Text input with checkbox" placeholder="GST TDS">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="col-lg-12 mb-3">
+                            <label for="narationAmount" class="form-label">NTP.1</label>
+                            <input type="text" class="form-control" id="ntp_one" name="ntp_one">
+                        </div>
+                    </div>
+                </div>
+                
+
               <div id="columnCheckboxes"></div>
 
               <div class="mt-4 d-flex justify-content-center align-items-center">
@@ -53,11 +103,15 @@
                     var headerColumn = JSON.parse(xhr.responseText).header_column;
                     var insuranceData = JSON.parse(xhr.responseText).insurance_data;
 
-                     // Create the select box
+                     // Create the select box insurance start here
                     const selectBoxInsurance = document.createElement('select');
                     selectBoxInsurance.id = 'insurance_id';
                     selectBoxInsurance.className = 'form-control';
                     selectBoxInsurance.name = 'insurance_id';
+                    selectBoxInsurance.onchange = function (){
+                        document.getElementById('insured_name').value = this.options[this.selectedIndex].text;
+                        fullNaration();
+                    }
 
                     insuranceData.forEach(function(insuranceData) {
                             var option = document.createElement('option');
@@ -74,6 +128,8 @@
 
                     document.getElementById('mergedForm').append(selectBoxInsurance);   
                     // document.getElementById('insurance_data_name').innerHTML="Select Insurance Name";
+                    // Create the select box insurance end here
+
                     
 
                     // console.log(insuranceData);
@@ -149,6 +205,7 @@
                     });
 
                     document.getElementById('formDownlaod').style.display="flex";
+                    document.getElementById('narationDiv').style.display="block";
                     console.log('file upload sucess');
                 } else {
                     console.log('file upload fail');
@@ -176,5 +233,23 @@
             document.getElementById('mergedForm').innerHTML= '';
             document.getElementById('formDownlaod').style.display= 'none';
         }
+
+
+
+        function fullNaration(){
+            let narationDate = document.getElementById('narationDate').value;
+            let narationAmount = document.getElementById('narationAmount').value;
+            let insurance_id = document.getElementById('insured_name').value != '' ? document.getElementById('insured_name').value : document.getElementById('insurance_id').options[0].text;
+            var gst_or_not;
+
+            if(document.getElementById('cgst_checkbox').checked == true || document.getElementById('sgst_checkbox').checked == true){
+                gst_or_not = 'with GST 18%';
+            }else{
+                gst_or_not = 'without GST';
+            }
+
+            document.getElementById('fullNaration').innerHTML = `BNG NEFT DT-${narationDate} rcvd towards brkg ${narationAmount} from ${insurance_id} ${gst_or_not}`;
+        }
+        
     </script>
 {% endblock %}

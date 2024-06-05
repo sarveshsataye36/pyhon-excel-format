@@ -54,7 +54,14 @@ def create_excel(request):
         column_names = request.POST.getlist('selected_columns')
         header_row_num = int(request.POST.get('header_row_num', 0))
         insurance_id = request.POST.get('insurance_id')
+        naration_date = request.POST.get('narationDate')
+        naration_amount = request.POST.get('narationAmount')
+        ntp_one = request.POST.get('ntp_one')
+        cgst_checkbox = request.POST.get('cgst_checkbox')
+        sgst_checkbox = request.POST.get('sgst_checkbox')
         header_list = request.POST.getlist('mapped_column')
+
+        print(f"cgst_checkbox ==== {cgst_checkbox} || sgst_checkbox === {sgst_checkbox}")
 
         # Get the starting row from the request, default is 0
         if header_row_num > 0:
@@ -85,6 +92,11 @@ def create_excel(request):
         merged_df['Debtor Name'] = insurance_name
         merged_df['Debtor Branch Ref'] = insurance_id
         merged_df['RepDate'] = current_date
+        merged_df['NPT.1'] = ntp_one
+        if cgst_checkbox != 'cgst_checkbox' and sgst_checkbox != 'sgst_checkbox':
+            merged_df['Narration'] = f"BNG NEFT DT-{naration_date} rcvd towards brkg {naration_amount} from {insurance_name} with GST 18%"
+        else:
+            merged_df['Narration'] = f"BNG NEFT DT-{naration_date} rcvd towards brkg {naration_amount} from {insurance_name} without GST"
 
         # Create a new Excel file with pandas
         output = io.BytesIO()
